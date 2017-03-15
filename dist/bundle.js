@@ -77,12 +77,21 @@ const React = __webpack_require__(1);
 const FilterLibray = __webpack_require__(4);
 const FilterPipeline_1 = __webpack_require__(5);
 ;
+function guid() {
+    function s4() {
+        return Math.floor((1 + Math.random()) * 0x10000)
+            .toString(16)
+            .substring(1);
+    }
+    return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+        s4() + '-' + s4() + s4() + s4();
+}
 class App extends React.Component {
     constructor(props) {
         super(props);
         this.availableFilters = [FilterLibray.Filters.filterEQ, FilterLibray.Filters.filterLT, FilterLibray.Filters.filterGT, FilterLibray.Filters.compareFilter];
         this.state = {
-            filters: [],
+            filters: this.availableFilters.map((func) => { return new FilterPipeline_1.Pipeline.Filter(guid(), func); }),
             input: [
                 { num: 0, text: 'hej' },
                 { num: 5 },
@@ -92,13 +101,17 @@ class App extends React.Component {
                 { num: 20 },
                 { "1": "1" },
                 { obj: { c: 'text' } },
+                { tire: { thickness: 50, model: 'saab' } },
+                { tire: { thickness: 20, model: 'saab' } },
+                { tire: { thickness: 50, model: 'volvo' } },
+                { tire: { thickness: 20, model: 'volvo' } },
                 0,
                 1,
                 2,
                 -5,
                 -10
             ],
-            searchText: { key: '', value: '' }
+            searchTexts: []
         };
     }
     findAvailableFilter(filterName) {
@@ -109,82 +122,91 @@ class App extends React.Component {
             return false;
         } });
         if (filter !== undefined)
-            return [true, new FilterPipeline_1.Pipeline.Filter(filter)];
+            return [true, new FilterPipeline_1.Pipeline.Filter(guid(), filter)];
         return [false, null];
     }
-    filterInUse(filterName) {
-        if (this.state.filters.find((f) => { return f.func.name === filterName; }) === undefined)
+    filterInUse(filterId) {
+        if (this.state.filters.find((f) => { return f.id === filterId; }) === undefined)
             return false;
         return true;
     }
-    toggleFilter(filterName) {
-        let availableFilter = this.findAvailableFilter(filterName);
-        if (availableFilter[0] === false)
-            return;
-        if (this.filterInUse(filterName)) {
-            this.setState({ filters: this.state.filters.filter((f) => { if (f.func.name !== filterName) {
-                    return true;
-                }
-                else {
-                    return false;
-                } }) });
+    toggleFilter(filterId) {
+        if (this.filterInUse(filterId)) {
+            this.setState({ filters: [...this.state.filters.filter((f) => { if (f.id !== filterId) {
+                        return true;
+                    }
+                    else {
+                        return false;
+                    } })] });
         }
         else {
+            let availableFilter = this.findAvailableFilter(filterId);
+            if (availableFilter[0] === false)
+                return;
             const newArray = [...this.state.filters, availableFilter[1]];
             this.setState({ filters: newArray });
         }
     }
-    handleSearch(value, key) {
-        let existingFilter = this.state.filters.find((f) => { return f.func.name === 'compareFilter'; });
-        let searchText = Object.assign(this.state.searchText);
-        if (searchText.key !== key && key !== undefined) {
-            if (existingFilter === undefined) {
-                searchText["key"] = key;
-                existingFilter = new FilterPipeline_1.Pipeline.Filter(FilterLibray.Filters.compareFilter, searchText);
-            }
-            else {
-                searchText["key"] = key;
-            }
+    handleChangeValue(value, filterId) {
+        const existingFilter = this.state.filters.find((f) => { return f.id === filterId; });
+        if (value[0] !== undefined) {
+            existingFilter.args.value = value[0];
         }
-        else if (searchText.value !== value && value !== undefined) {
-            if (existingFilter === undefined) {
-                searchText.value = value;
-                existingFilter = new FilterPipeline_1.Pipeline.Filter(FilterLibray.Filters.compareFilter, searchText);
-            }
-            else {
-                searchText["value"] = value;
-            }
+        else if (value[1] !== undefined) {
+            existingFilter.args.value = value[1];
         }
-        this.setState({ searchText: searchText, filters: [existingFilter] });
+        this.setState({ filters: [...this.state.filters.filter((f) => { if (f.id !== filterId) {
+                    return true;
+                }
+                else {
+                    return false;
+                } }), existingFilter] });
+    }
+    handleChangeKey(key, filterId) {
+        const existingFilter = this.state.filters.find((f) => { return f.id === filterId; });
+        existingFilter.args.key = key;
+        this.setState({ filters: [...this.state.filters.filter((f) => { if (f.id !== filterId) {
+                    return true;
+                }
+                else {
+                    return false;
+                } }), existingFilter] });
+    }
+    addCompareFilter() {
+        const filter = new FilterPipeline_1.Pipeline.Filter(guid(), FilterLibray.Filters.compareFilter, {});
+        this.setState({ filters: [...this.state.filters, filter] });
     }
     render() {
         let filtered = this.state.input;
         if (this.state.filters.length > 0) {
-            filtered = FilterPipeline_1.Pipeline.OR(this.state.input, this.state.filters);
+            filtered = FilterPipeline_1.Pipeline.AND(this.state.input, this.state.filters);
         }
-        filtered = filtered.map(i => { return React.createElement("tr", { key: i.num },
-            React.createElement("td", null, JSON.stringify(i))); });
-        let filterButtons = this.availableFilters.map((f) => {
-            if (f.name === 'compareFilter') {
+        filtered = filtered.map((obj, index) => { return React.createElement("tr", { key: obj + index },
+            React.createElement("td", null, JSON.stringify(obj))); });
+        let filterButtons = this.state.filters.map((f) => {
+            if (f.func.name === 'compareFilter') {
                 return (React.createElement("div", null,
-                    React.createElement("input", { type: "button", key: f.name, value: f.name, onClick: () => { this.toggleFilter(f.name); } }),
+                    React.createElement("input", { type: "button", key: f.func.name, value: f.func.name, onClick: () => { this.toggleFilter(f.id); } }),
                     "key",
-                    React.createElement("input", { type: "text", key: f.name + 'key', onChange: (e) => { this.handleSearch(undefined, e.target.value); } }),
-                    "value",
-                    React.createElement("input", { type: "text", key: f.name + 'val', onChange: (e) => { this.handleSearch(e.target.value, undefined); } })));
+                    React.createElement("input", { type: "text", key: f.id + 'key', onChange: (e) => { this.handleChangeKey(e.target.value, f.id); } }),
+                    "value as number",
+                    React.createElement("input", { type: "number", key: f.id + 'valnum', onChange: (e) => { this.handleChangeValue([Number(e.target.value), undefined], f.id); } }),
+                    "value as string",
+                    React.createElement("input", { type: "text", key: f.id + 'valstr', onChange: (e) => { this.handleChangeValue([undefined, e.target.value], f.id); } })));
             }
             else {
-                return React.createElement("input", { type: "button", key: f.name, value: f.name, onClick: () => { this.toggleFilter(f.name); } });
+                return React.createElement("input", { type: "button", key: f.id, value: f.func.name, onClick: () => { this.toggleFilter(f.id); } });
             }
         });
         return (React.createElement("div", null,
             React.createElement("table", null,
                 React.createElement("tbody", null, filtered)),
             filterButtons,
+            React.createElement("input", { type: "button", value: "Add compare filter", onClick: () => { this.addCompareFilter(); } }),
             React.createElement("div", null,
                 React.createElement("h3", null, "Applied filters"),
                 React.createElement("ul", null, this.state.filters.map((f) => { return React.createElement("li", null, f.func.name); })),
-                JSON.stringify(this.state.searchText),
+                JSON.stringify(this.state.searchTexts),
                 JSON.stringify(this.state.filters))));
     }
 }
@@ -272,8 +294,8 @@ var Filters;
     Filters.filterEQ = filterEQ;
     ;
     function compareFilter(e) {
-        if (this === undefined)
-            throw 'No compare metadata.';
+        if (this === undefined || this.key === undefined || this.value === undefined)
+            return false;
         if (_.get(e, this.key) === this.value)
             return true;
         return false;
@@ -316,15 +338,16 @@ var Pipeline;
     function AND(input, filters) {
         let inputCopy = Object.assign(input);
         filters.forEach((f) => {
-            inputCopy = inputCopy.filter(f);
+            inputCopy = inputCopy.filter(f.func, f.args);
         });
         return inputCopy;
     }
     Pipeline.AND = AND;
     class Filter {
-        constructor(func, args) {
+        constructor(id, func, args = {}) {
             this.args = args;
             this.func = func;
+            this.id = id;
         }
     }
     Pipeline.Filter = Filter;

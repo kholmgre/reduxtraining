@@ -44,8 +44,8 @@ export module Filters {
         }
     };
     export function compareFilter(e: any) {
-        if(this === undefined)
-            throw 'No compare metadata.';
+        if(this === undefined || this.key === undefined || this.value === undefined)
+            return false;
         if (_.get(e, this.key) === this.value)
             return true;
         

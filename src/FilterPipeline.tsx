@@ -11,11 +11,11 @@ export module Pipeline {
 
         return concat;
     }
-    export function AND(input: any, filters: Array<Function>) {
+    export function AND(input: any, filters: Array<IFilter>) {
         let inputCopy = Object.assign(input);
 
-        filters.forEach((f: Function) => {
-            inputCopy = inputCopy.filter(f);
+        filters.forEach((f: Filter) => {
+            inputCopy = inputCopy.filter(f.func, f.args);
         });
 
         return inputCopy;
@@ -25,10 +25,12 @@ export module Pipeline {
     export class Filter implements IFilter {
         func: Function;
         args: any[];
+        readonly id: string 
 
-        constructor(func: Function, args?: any){
+        constructor(id: string, func: Function, args: any = {}){
             this.args = args;
             this.func = func;
+            this.id = id;
         }
     }
 }
