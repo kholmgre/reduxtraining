@@ -12,7 +12,7 @@ export class App extends React.Component<AppProps, AppState> {
     constructor(props: any) {
         super(props);
 
-        this.availableFilters = [FilterLibray.Filters.filterEQ, FilterLibray.Filters.filterLT, FilterLibray.Filters.filterGT, FilterLibray.Filters.dynamicFilter];
+        this.availableFilters = [FilterLibray.Filters.filterEQ, FilterLibray.Filters.filterLT, FilterLibray.Filters.filterGT, FilterLibray.Filters.compareFilter];
 
         this.state = {
             filters: [],
@@ -22,44 +22,78 @@ export class App extends React.Component<AppProps, AppState> {
                 { num: 8 },
                 { num: -5 },
                 { num: -10 },
-                { num: 20 }
+                { num: 20 },
+                { "1": "1" },
+                0,
+                1,
+                2,
+                -5,
+                -10
             ],
-            searchText: ''
+            searchText: { "a": '', "b": "1" }
         };
 
     }
+    private findAvailableFilter(filterName: string) : [boolean, Pipeline.Filter] {
+        let filter = this.availableFilters.find((f: Function) => { if (f.name === filterName) { return true; } else { return false; } });
+        if(filter !== undefined)
+            return [true, new Pipeline.Filter(filter)];
+        
+        return [false, null];
+    }
+    private filterInUse(filterName: string) : boolean {
+        if(this.state.filters.find((f: Pipeline.Filter) => { return f.func.name === filterName}) === undefined)
+            return false;
+
+        return true;
+    }
     toggleFilter(filterName: string): void {
-        if (this.state.filters.indexOf(this.availableFilters.find((f: Function) => { if (f.name === filterName) { return true; } else { return false; } })) !== -1) {
-            this.setState({ filters: this.state.filters.filter((f: Function) => { if (f.name !== filterName) { return true; } else { return false; } }) })
+        let availableFilter = this.findAvailableFilter(filterName);
+
+        if (availableFilter[0] === false) 
+            return;
+
+        if(this.filterInUse(filterName))
+        {
+           this.setState({ filters: this.state.filters.filter((f: Pipeline.Filter) => { if (f.func.name !== filterName) { return true; } else { return false; } }) }) 
         } else {
-            const newArray = [...this.state.filters, this.availableFilters.find((f: Function) => { if (f.name === filterName) { return true; } else { return false; } })];
+            const newArray = [...this.state.filters, availableFilter[1]];
             this.setState({ filters: newArray })
         }
     }
-    handleSearch(e: any, prop: string) {
-        let searchTxt = { prop: e };
+    handleSearch(prop: string) {
+        let existingFilter = this.state.filters.find((f: Pipeline.Filter) => { return f.func.name === 'compareFilter' });
 
-        let filter = new Pipeline.Filter(function (element: any) {
-            if (element.hej === this["compare"])
-                return true;
-            else { return false; }
-        }, searchTxt);
+        let searchText = Object.assign(this.state.searchText);
 
-        this.setState({ searchText: searchTxt });
+        if (existingFilter === undefined) {
+            searchText["a"] = prop;
+
+            existingFilter = new Pipeline.Filter(FilterLibray.Filters.compareFilter, searchText);
+        } else {
+            existingFilter.args.a = prop;
+        }
+
+        this.setState({ searchText: searchText, filters: [existingFilter] });
     }
     render() {
+        let filtered = this.state.input;
 
-        let filtered = Pipeline.OR(this.state.input, this.state.filters).map(i => { return <tr key={i.num}><td>{JSON.stringify(i)}</td></tr> });
+        if(this.state.filters.length > 0){
+            filtered = Pipeline.OR(this.state.input, this.state.filters);
+        }
+
+        filtered = filtered.map(i => { return <tr key={i.num}><td>{JSON.stringify(i)}</td></tr> });
 
         let filterButtons = this.availableFilters.map((f: Function) => {
-            if (f.name === 'dynamicFilter') {
+            if (f.name === 'compareFilter') {
                 return (
                     <div>
                         <input type="button" key={f.name} value={f.name} onClick={() => { this.toggleFilter(f.name) }} />
                         key
-                        <input type="text" key={f.name + 'key'} onChange={(e) => { this.handleSearch(e.target.value, "key") }} />
+                        {/*<input type="text" key={f.name + 'key'} onChange={(e) => { this.handleSearch(e.target.value, "key") }} />*/}
                         value
-                        <input type="text" key={f.name + 'val'} onChange={(e) => { this.handleSearch(e.target.value, "value") }} />
+                        <input type="text" key={f.name + 'val'} onChange={(e) => { this.handleSearch(e.target.value) }} />
                     </div>
                 )
             } else {
@@ -78,7 +112,7 @@ export class App extends React.Component<AppProps, AppState> {
                 <div>
                     <h3>Applied filters</h3>
                     <ul>
-                        {this.state.filters.map((f: Function) => { return <li>{f.name}</li> })}
+                        {this.state.filters.map((f: Pipeline.Filter) => { return <li>{f.func.name}</li> })}
                     </ul>
                     {JSON.stringify(this.state.searchText)}
                 </div>

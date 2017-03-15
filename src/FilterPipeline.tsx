@@ -26,7 +26,7 @@ export module Pipeline {
         func: Function;
         args: any[];
 
-        constructor(func: Function, args: any){
+        constructor(func: Function, args?: any){
             this.args = args;
             this.func = func;
         }

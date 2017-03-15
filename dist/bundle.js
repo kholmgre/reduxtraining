@@ -80,7 +80,7 @@ const FilterPipeline_1 = __webpack_require__(5);
 class App extends React.Component {
     constructor(props) {
         super(props);
-        this.availableFilters = [FilterLibray.Filters.filterEQ, FilterLibray.Filters.filterLT, FilterLibray.Filters.filterGT, FilterLibray.Filters.dynamicFilter];
+        this.availableFilters = [FilterLibray.Filters.filterEQ, FilterLibray.Filters.filterLT, FilterLibray.Filters.filterGT, FilterLibray.Filters.compareFilter];
         this.state = {
             filters: [],
             input: [
@@ -89,19 +89,39 @@ class App extends React.Component {
                 { num: 8 },
                 { num: -5 },
                 { num: -10 },
-                { num: 20 }
+                { num: 20 },
+                { "1": "1" },
+                0,
+                1,
+                2,
+                -5,
+                -10
             ],
-            searchText: ''
+            searchText: { "a": '', "b": "1" }
         };
     }
-    toggleFilter(filterName) {
-        if (this.state.filters.indexOf(this.availableFilters.find((f) => { if (f.name === filterName) {
+    findAvailableFilter(filterName) {
+        let filter = this.availableFilters.find((f) => { if (f.name === filterName) {
             return true;
         }
         else {
             return false;
-        } })) !== -1) {
-            this.setState({ filters: this.state.filters.filter((f) => { if (f.name !== filterName) {
+        } });
+        if (filter !== undefined)
+            return [true, new FilterPipeline_1.Pipeline.Filter(filter)];
+        return [false, null];
+    }
+    filterInUse(filterName) {
+        if (this.state.filters.find((f) => { return f.func.name === filterName; }) === undefined)
+            return false;
+        return true;
+    }
+    toggleFilter(filterName) {
+        let availableFilter = this.findAvailableFilter(filterName);
+        if (availableFilter[0] === false)
+            return;
+        if (this.filterInUse(filterName)) {
+            this.setState({ filters: this.state.filters.filter((f) => { if (f.func.name !== filterName) {
                     return true;
                 }
                 else {
@@ -109,37 +129,36 @@ class App extends React.Component {
                 } }) });
         }
         else {
-            const newArray = [...this.state.filters, this.availableFilters.find((f) => { if (f.name === filterName) {
-                    return true;
-                }
-                else {
-                    return false;
-                } })];
+            const newArray = [...this.state.filters, availableFilter[1]];
             this.setState({ filters: newArray });
         }
     }
-    handleSearch(e, prop) {
-        let searchTxt = { prop: e };
-        let filter = new FilterPipeline_1.Pipeline.Filter(function (element) {
-            if (element.hej === this["compare"])
-                return true;
-            else {
-                return false;
-            }
-        }, searchTxt);
-        this.setState({ searchText: searchTxt });
+    handleSearch(prop) {
+        let existingFilter = this.state.filters.find((f) => { return f.func.name === 'compareFilter'; });
+        let searchText = Object.assign(this.state.searchText);
+        if (existingFilter === undefined) {
+            searchText["a"] = prop;
+            existingFilter = new FilterPipeline_1.Pipeline.Filter(FilterLibray.Filters.compareFilter, searchText);
+        }
+        else {
+            existingFilter.args.a = prop;
+        }
+        this.setState({ searchText: searchText, filters: [existingFilter] });
     }
     render() {
-        let filtered = FilterPipeline_1.Pipeline.OR(this.state.input, this.state.filters).map(i => { return React.createElement("tr", { key: i.num },
+        let filtered = this.state.input;
+        if (this.state.filters.length > 0) {
+            filtered = FilterPipeline_1.Pipeline.OR(this.state.input, this.state.filters);
+        }
+        filtered = filtered.map(i => { return React.createElement("tr", { key: i.num },
             React.createElement("td", null, JSON.stringify(i))); });
         let filterButtons = this.availableFilters.map((f) => {
-            if (f.name === 'dynamicFilter') {
+            if (f.name === 'compareFilter') {
                 return (React.createElement("div", null,
                     React.createElement("input", { type: "button", key: f.name, value: f.name, onClick: () => { this.toggleFilter(f.name); } }),
                     "key",
-                    React.createElement("input", { type: "text", key: f.name + 'key', onChange: (e) => { this.handleSearch(e.target.value, "key"); } }),
                     "value",
-                    React.createElement("input", { type: "text", key: f.name + 'val', onChange: (e) => { this.handleSearch(e.target.value, "value"); } })));
+                    React.createElement("input", { type: "text", key: f.name + 'val', onChange: (e) => { this.handleSearch(e.target.value); } })));
             }
             else {
                 return React.createElement("input", { type: "button", key: f.name, value: f.name, onClick: () => { this.toggleFilter(f.name); } });
@@ -151,7 +170,7 @@ class App extends React.Component {
             filterButtons,
             React.createElement("div", null,
                 React.createElement("h3", null, "Applied filters"),
-                React.createElement("ul", null, this.state.filters.map((f) => { return React.createElement("li", null, f.name); })),
+                React.createElement("ul", null, this.state.filters.map((f) => { return React.createElement("li", null, f.func.name); })),
                 JSON.stringify(this.state.searchText))));
     }
 }
@@ -193,7 +212,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var Filters;
 (function (Filters) {
     function filterGT(e) {
-        if (e.num > 0) {
+        let val = 0;
+        if (this !== undefined) {
+            if (this["number"] !== undefined)
+                val = this["number"];
+        }
+        if (e > 0) {
             return true;
         }
         else {
@@ -203,7 +227,12 @@ var Filters;
     Filters.filterGT = filterGT;
     ;
     function filterLT(e) {
-        if (e.num < 0) {
+        let val = 0;
+        if (this !== undefined) {
+            if (this["number"] !== undefined)
+                val = this["number"];
+        }
+        if (e < val) {
             return true;
         }
         else {
@@ -213,7 +242,12 @@ var Filters;
     Filters.filterLT = filterLT;
     ;
     function filterEQ(e) {
-        if (e.num === 0) {
+        let val = 0;
+        if (this !== undefined) {
+            if (this["number"] !== undefined)
+                val = this["number"];
+        }
+        if (e === val) {
             return true;
         }
         else {
@@ -222,13 +256,20 @@ var Filters;
     }
     Filters.filterEQ = filterEQ;
     ;
-    function dynamicFilter(e) {
-        if (this.e === 'tejj')
+    function compareFilter(e) {
+        if (e[this["a"]] === undefined || e[this["b"]] === undefined)
+            return false;
+        if (e[this["a"]] === e[this["b"]])
             return true;
         return false;
     }
-    Filters.dynamicFilter = dynamicFilter;
+    Filters.compareFilter = compareFilter;
     ;
+    function customFilter(e) {
+        if (this === undefined)
+            throw 'Custom filter without compare metadata.';
+    }
+    Filters.customFilter = customFilter;
 })(Filters = exports.Filters || (exports.Filters = {}));
 
 
