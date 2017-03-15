@@ -172,6 +172,16 @@ class App extends React.Component {
                     return false;
                 } }), existingFilter] });
     }
+    handleChangeProperty(key, number, filterId) {
+        const existingFilter = this.state.filters.find((f) => { return f.id === filterId; });
+        existingFilter.args[key] = number;
+        this.setState({ filters: [...this.state.filters.filter((f) => { if (f.id !== filterId) {
+                    return true;
+                }
+                else {
+                    return false;
+                } }), existingFilter] });
+    }
     addCompareFilter() {
         const filter = new FilterPipeline_1.Pipeline.Filter(guid(), FilterLibray.Filters.compareFilter, {});
         this.setState({ filters: [...this.state.filters, filter] });
@@ -179,7 +189,7 @@ class App extends React.Component {
     render() {
         let filtered = this.state.input;
         if (this.state.filters.length > 0) {
-            filtered = FilterPipeline_1.Pipeline.AND(this.state.input, this.state.filters);
+            filtered = FilterPipeline_1.Pipeline.OR(this.state.input, this.state.filters);
         }
         filtered = filtered.map((obj, index) => { return React.createElement("tr", { key: obj + index },
             React.createElement("td", null, JSON.stringify(obj))); });
@@ -193,6 +203,11 @@ class App extends React.Component {
                     React.createElement("input", { type: "number", key: f.id + 'valnum', onChange: (e) => { this.handleChangeValue([Number(e.target.value), undefined], f.id); } }),
                     "value as string",
                     React.createElement("input", { type: "text", key: f.id + 'valstr', onChange: (e) => { this.handleChangeValue([undefined, e.target.value], f.id); } })));
+            }
+            else if (f.func.name === 'filterEQ') {
+                return (React.createElement("div", null,
+                    React.createElement("input", { type: "button", key: f.id, value: f.func.name, onClick: () => { this.toggleFilter(f.id); } }),
+                    React.createElement("input", { type: "number", key: f.id + 'valnum', onChange: (e) => { this.handleChangeProperty("number", Number(e.target.value), f.id); } })));
             }
             else {
                 return React.createElement("input", { type: "button", key: f.id, value: f.func.name, onClick: () => { this.toggleFilter(f.id); } });

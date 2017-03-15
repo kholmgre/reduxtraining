@@ -24,7 +24,7 @@ export class App extends React.Component<AppProps, AppState> {
         this.availableFilters = [FilterLibray.Filters.filterEQ, FilterLibray.Filters.filterLT, FilterLibray.Filters.filterGT, FilterLibray.Filters.compareFilter];
 
         this.state = {
-            filters: this.availableFilters.map((func: Function) => { return new Pipeline.Filter(guid(), func)}),
+            filters: this.availableFilters.map((func: Function) => { return new Pipeline.Filter(guid(), func) }),
             input: [
                 { num: 0, text: 'hej' },
                 { num: 5 },
@@ -77,9 +77,9 @@ export class App extends React.Component<AppProps, AppState> {
     handleChangeValue(value: [number, string], filterId: string): void {
         const existingFilter = this.state.filters.find((f: Pipeline.Filter) => { return f.id === filterId });
 
-        if(value[0] !== undefined){
+        if (value[0] !== undefined) {
             existingFilter.args.value = value[0];
-        } else if (value[1] !== undefined){
+        } else if (value[1] !== undefined) {
             existingFilter.args.value = value[1];
         }
 
@@ -92,6 +92,13 @@ export class App extends React.Component<AppProps, AppState> {
 
         this.setState({ filters: [...this.state.filters.filter((f: Pipeline.Filter) => { if (f.id !== filterId) { return true; } else { return false; } }), existingFilter] });
     }
+    handleChangeProperty(key: string, number: number, filterId: string) {
+        const existingFilter = this.state.filters.find((f: Pipeline.Filter) => { return f.id === filterId });
+
+        existingFilter.args[key] = number;
+
+        this.setState({ filters: [...this.state.filters.filter((f: Pipeline.Filter) => { if (f.id !== filterId) { return true; } else { return false; } }), existingFilter] });
+    }
     addCompareFilter() {
         const filter = new Pipeline.Filter(guid(), FilterLibray.Filters.compareFilter, {});
 
@@ -101,7 +108,7 @@ export class App extends React.Component<AppProps, AppState> {
         let filtered = this.state.input;
 
         if (this.state.filters.length > 0) {
-            filtered = Pipeline.AND(this.state.input, this.state.filters);
+            filtered = Pipeline.OR(this.state.input, this.state.filters);
         }
 
         filtered = filtered.map((obj: any, index: number) => { return <tr key={obj + index}><td>{JSON.stringify(obj)}</td></tr> });
@@ -120,7 +127,15 @@ export class App extends React.Component<AppProps, AppState> {
                         <input type="text" key={f.id + 'valstr'} onChange={(e) => { this.handleChangeValue([undefined, e.target.value], f.id) }} />
                     </div>
                 )
-            } else {
+            } else if (f.func.name === 'filterEQ') {
+                return (
+                    <div>
+                        <input type="button" key={f.id} value={f.func.name} onClick={() => { this.toggleFilter(f.id) }} />
+                        <input type="number" key={f.id + 'valnum'} onChange={(e) => { this.handleChangeProperty("number", Number(e.target.value), f.id) }} />
+                        </div>
+                )
+            }
+            else {
                 return <input type="button" key={f.id} value={f.func.name} onClick={() => { this.toggleFilter(f.id) }} />
             }
         })
