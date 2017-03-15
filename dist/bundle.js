@@ -183,9 +183,9 @@ class App extends React.Component {
         }
         filtered = filtered.map((obj, index) => { return React.createElement("tr", { key: obj + index },
             React.createElement("td", null, JSON.stringify(obj))); });
-        let filterButtons = this.state.filters.map((f) => {
+        let filterButtons = this.state.filters.map((f, index) => {
             if (f.func.name === 'compareFilter') {
-                return (React.createElement("div", null,
+                return (React.createElement("div", { key: index },
                     React.createElement("input", { type: "button", key: f.func.name, value: f.func.name, onClick: () => { this.toggleFilter(f.id); } }),
                     "key",
                     React.createElement("input", { type: "text", key: f.id + 'key', onChange: (e) => { this.handleChangeKey(e.target.value, f.id); } }),
@@ -205,7 +205,7 @@ class App extends React.Component {
             React.createElement("input", { type: "button", value: "Add compare filter", onClick: () => { this.addCompareFilter(); } }),
             React.createElement("div", null,
                 React.createElement("h3", null, "Applied filters"),
-                React.createElement("ul", null, this.state.filters.map((f) => { return React.createElement("li", null, f.func.name); })),
+                React.createElement("ul", null, this.state.filters.map((f, index) => { return React.createElement("li", { key: index }, f.func.name); })),
                 JSON.stringify(this.state.searchTexts),
                 JSON.stringify(this.state.filters))));
     }

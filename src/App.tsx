@@ -106,11 +106,11 @@ export class App extends React.Component<AppProps, AppState> {
 
         filtered = filtered.map((obj: any, index: number) => { return <tr key={obj + index}><td>{JSON.stringify(obj)}</td></tr> });
 
-        let filterButtons = this.state.filters.map((f: Pipeline.Filter) => {
+        let filterButtons = this.state.filters.map((f: Pipeline.Filter, index: number) => {
 
             if (f.func.name === 'compareFilter') {
                 return (
-                    <div>
+                    <div key={index}>
                         <input type="button" key={f.func.name} value={f.func.name} onClick={() => { this.toggleFilter(f.id) }} />
                         key
                         <input type="text" key={f.id + 'key'} onChange={(e) => { this.handleChangeKey(e.target.value, f.id) }} />
@@ -137,7 +137,7 @@ export class App extends React.Component<AppProps, AppState> {
                 <div>
                     <h3>Applied filters</h3>
                     <ul>
-                        {this.state.filters.map((f: Pipeline.Filter) => { return <li>{f.func.name}</li> })}
+                        {this.state.filters.map((f: Pipeline.Filter, index: number) => { return <li key={index}>{f.func.name}</li> })}
                     </ul>
                     {JSON.stringify(this.state.searchTexts)}
                     {JSON.stringify(this.state.filters)}
