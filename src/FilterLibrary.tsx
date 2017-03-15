@@ -44,17 +44,25 @@ export module Filters {
         }
     };
     export function compareFilter(e: any) {
-        if (e[this["a"]] === undefined || e[this["b"]] === undefined)
-            return false;
-        if (e[this["a"]] === e[this["b"]])
+        if(this === undefined)
+            throw 'No compare metadata.';
+        if (_.get(e, this.key) === this.value)
             return true;
-
+        
         return false;
     };
-    export function customFilter(e: object) : boolean {
-        if(this === undefined)
-            throw 'Custom filter without compare metadata.';
+    // export function customFilter(e: object) : boolean {
+    //     if(this === undefined)
+    //         throw 'Custom filter without compare metadata.';
         
-        
-    }
+    //     if(this.filters === null)
+    //         throw 'Missing properties to filter for.';
+
+    //     // vilken property
+    //     this.filters.forEach((f: Function) => {
+
+    //     });
+    //     // vilken operation
+    //     // vilka värden
+    // }
 }
