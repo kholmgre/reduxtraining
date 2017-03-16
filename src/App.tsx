@@ -108,7 +108,7 @@ export class App extends React.Component<AppProps, AppState> {
         let filtered = this.state.input;
 
         if (this.state.filters.length > 0) {
-            filtered = Pipeline.OR(this.state.input, this.state.filters);
+            filtered = Pipeline.AND(this.state.input, this.state.filters);
         }
 
         filtered = filtered.map((obj: any, index: number) => { return <tr key={obj + index}><td>{JSON.stringify(obj)}</td></tr> });

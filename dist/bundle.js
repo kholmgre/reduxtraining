@@ -63,19 +63,25 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 3);
+/******/ 	return __webpack_require__(__webpack_require__.s = 8);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
+/***/ (function(module, exports) {
+
+module.exports = React;
+
+/***/ }),
+/* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const React = __webpack_require__(1);
-const FilterLibray = __webpack_require__(4);
-const FilterPipeline_1 = __webpack_require__(5);
+const React = __webpack_require__(0);
+const FilterLibray = __webpack_require__(3);
+const FilterPipeline_1 = __webpack_require__(4);
 ;
 function guid() {
     function s4() {
@@ -189,7 +195,7 @@ class App extends React.Component {
     render() {
         let filtered = this.state.input;
         if (this.state.filters.length > 0) {
-            filtered = FilterPipeline_1.Pipeline.OR(this.state.input, this.state.filters);
+            filtered = FilterPipeline_1.Pipeline.AND(this.state.input, this.state.filters);
         }
         filtered = filtered.map((obj, index) => { return React.createElement("tr", { key: obj + index },
             React.createElement("td", null, JSON.stringify(obj))); });
@@ -229,12 +235,6 @@ exports.App = App;
 
 
 /***/ }),
-/* 1 */
-/***/ (function(module, exports) {
-
-module.exports = React;
-
-/***/ }),
 /* 2 */
 /***/ (function(module, exports) {
 
@@ -247,20 +247,7 @@ module.exports = ReactDOM;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const React = __webpack_require__(1);
-const react_dom_1 = __webpack_require__(2);
-const App_1 = __webpack_require__(0);
-react_dom_1.render(React.createElement(App_1.App, null), document.getElementById('root'));
-
-
-/***/ }),
-/* 4 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const _ = __webpack_require__(6);
+const _ = __webpack_require__(5);
 var Filters;
 (function (Filters) {
     function filterGT(e) {
@@ -332,7 +319,7 @@ var Filters;
 
 
 /***/ }),
-/* 5 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -370,7 +357,7 @@ var Pipeline;
 
 
 /***/ }),
-/* 6 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {var __WEBPACK_AMD_DEFINE_RESULT__;/**
@@ -17459,10 +17446,10 @@ var Pipeline;
   }
 }.call(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7), __webpack_require__(8)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6), __webpack_require__(7)(module)))
 
 /***/ }),
-/* 7 */
+/* 6 */
 /***/ (function(module, exports) {
 
 var g;
@@ -17489,7 +17476,7 @@ module.exports = g;
 
 
 /***/ }),
-/* 8 */
+/* 7 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
@@ -17514,6 +17501,19 @@ module.exports = function(module) {
 	}
 	return module;
 };
+
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const React = __webpack_require__(0);
+const react_dom_1 = __webpack_require__(2);
+const App_1 = __webpack_require__(1);
+react_dom_1.render(React.createElement(App_1.App, null), document.getElementById('root'));
 
 
 /***/ })
