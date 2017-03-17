@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import { Utils } from './Utils';
 
 export module Filters {
     export function filterGT(e: number) {
@@ -46,23 +46,9 @@ export module Filters {
     export function compareFilter(e: any) {
         if(this === undefined || this.key === undefined || this.value === undefined)
             return false;
-        if (_.get(e, this.key) === this.value)
+        if (Utils.get(e, this.key) === this.value)
             return true;
         
         return false;
     };
-    // export function customFilter(e: object) : boolean {
-    //     if(this === undefined)
-    //         throw 'Custom filter without compare metadata.';
-        
-    //     if(this.filters === null)
-    //         throw 'Missing properties to filter for.';
-
-    //     // vilken property
-    //     this.filters.forEach((f: Function) => {
-
-    //     });
-    //     // vilken operation
-    //     // vilka värden
-    // }
 }

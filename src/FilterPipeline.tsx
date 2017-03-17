@@ -1,5 +1,5 @@
 export module Pipeline {
-    export function OR(input: any, filters: Array<IFilter>) {
+    export function SomeMatch(input: any, filters: Array<IFilter>) : any {
         let inputCopy = Object.assign(input);
 
         let concat: Array<any> = [];
@@ -11,7 +11,7 @@ export module Pipeline {
 
         return concat;
     }
-    export function AND(input: any, filters: Array<IFilter>) {
+    export function AllMatch(input: any, filters: Array<IFilter>) : any {
         let inputCopy = Object.assign(input);
 
         filters.forEach((f: Filter) => {
@@ -20,14 +20,18 @@ export module Pipeline {
 
         return inputCopy;
     }
-    export interface IFilter { func: Function, args: Array<any> }
+    export function NoneMatch(input: any, filters: Array<IFilter>) : any {
+        throw 'Not implemented';
+    }
 
+    export interface IFilter { func: Function, args: Array<any> }
+    
     export class Filter implements IFilter {
         func: Function;
         args: any[];
-        readonly id: string 
+        readonly id: string
 
-        constructor(id: string, func: Function, args: any = {}){
+        constructor(id: string, func: Function, args: any = {}) {
             this.args = args;
             this.func = func;
             this.id = id;

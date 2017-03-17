@@ -1,20 +1,11 @@
 import * as React from 'react';
 import * as FilterLibray from './FilterLibrary';
 import { Pipeline } from './FilterPipeline';
+import { Utils } from './Utils';
 
 interface AppState { filters: any, input: Array<any>, searchTexts: Array<any> };
 
 interface AppProps { }
-
-function guid() {
-    function s4() {
-        return Math.floor((1 + Math.random()) * 0x10000)
-            .toString(16)
-            .substring(1);
-    }
-    return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
-        s4() + '-' + s4() + s4() + s4();
-}
 
 export class App extends React.Component<AppProps, AppState> {
     private availableFilters: any;
@@ -24,7 +15,7 @@ export class App extends React.Component<AppProps, AppState> {
         this.availableFilters = [FilterLibray.Filters.filterEQ, FilterLibray.Filters.filterLT, FilterLibray.Filters.filterGT, FilterLibray.Filters.compareFilter];
 
         this.state = {
-            filters: this.availableFilters.map((func: Function) => { return new Pipeline.Filter(guid(), func) }),
+            filters: this.availableFilters.map((func: Function) => { return new Pipeline.Filter(Utils.guid(), func) }),
             input: [
                 { num: 0, text: 'hej' },
                 { num: 5 },
@@ -38,6 +29,7 @@ export class App extends React.Component<AppProps, AppState> {
                 { tire: { thickness: 20, model: 'saab' } },
                 { tire: { thickness: 50, model: 'volvo' } },
                 { tire: { thickness: 20, model: 'volvo' } },
+                { tire: { values: [{ metadata: 'hej' }] } },
                 0,
                 1,
                 2,
@@ -51,7 +43,7 @@ export class App extends React.Component<AppProps, AppState> {
     private findAvailableFilter(filterName: string): [boolean, Pipeline.Filter] {
         let filter = this.availableFilters.find((f: Function) => { if (f.name === filterName) { return true; } else { return false; } });
         if (filter !== undefined)
-            return [true, new Pipeline.Filter(guid(), filter)];
+            return [true, new Pipeline.Filter(Utils.guid(), filter)];
 
         return [false, null];
     }
@@ -99,8 +91,8 @@ export class App extends React.Component<AppProps, AppState> {
 
         this.setState({ filters: [...this.state.filters.filter((f: Pipeline.Filter) => { if (f.id !== filterId) { return true; } else { return false; } }), existingFilter] });
     }
-    addCompareFilter() {
-        const filter = new Pipeline.Filter(guid(), FilterLibray.Filters.compareFilter, {});
+    addCompareFilter(): void {
+        const filter = new Pipeline.Filter(Utils.guid(), FilterLibray.Filters.compareFilter, {});
 
         this.setState({ filters: [...this.state.filters, filter] });
     }
@@ -108,7 +100,9 @@ export class App extends React.Component<AppProps, AppState> {
         let filtered = this.state.input;
 
         if (this.state.filters.length > 0) {
-            filtered = Pipeline.AND(this.state.input, this.state.filters);
+            filtered = Pipeline.AllMatch(this.state.input, this.state.filters);
+
+
         }
 
         filtered = filtered.map((obj: any, index: number) => { return <tr key={obj + index}><td>{JSON.stringify(obj)}</td></tr> });
@@ -132,7 +126,7 @@ export class App extends React.Component<AppProps, AppState> {
                     <div>
                         <input type="button" key={f.id} value={f.func.name} onClick={() => { this.toggleFilter(f.id) }} />
                         <input type="number" key={f.id + 'valnum'} onChange={(e) => { this.handleChangeProperty("number", Number(e.target.value), f.id) }} />
-                        </div>
+                    </div>
                 )
             }
             else {
@@ -149,6 +143,7 @@ export class App extends React.Component<AppProps, AppState> {
                 </table>
                 {filterButtons}
                 <input type="button" value="Add compare filter" onClick={() => { this.addCompareFilter() }} />
+                <input type="button" value="Create new filter pipeline" onClick={() => { }} />
                 <div>
                     <h3>Applied filters</h3>
                     <ul>
