@@ -15,7 +15,7 @@ export class App extends React.Component<AppProps, AppState> {
         this.availableFilters = [FilterLibray.Filters.filterEQ, FilterLibray.Filters.filterLT, FilterLibray.Filters.filterGT, FilterLibray.Filters.compareFilter];
 
         this.state = {
-            filters: this.availableFilters.map((func: Function) => { return new Pipeline.Filter(Utils.guid(), func) }),
+            filters: this.availableFilters.map((func: Function) => new Pipeline.Filter(Utils.guid(), func)),
             input: [
                 { num: 0, text: 'hej' },
                 { num: 5 },
@@ -34,11 +34,13 @@ export class App extends React.Component<AppProps, AppState> {
                 1,
                 2,
                 -5,
-                -10
+                -10,
+                { name: "offa", num: 1 },
+                { name: "offa", num: 4 },
+                { name: "bengt", num: 4 }
             ],
             searchTexts: []
         };
-
     }
     private findAvailableFilter(filterName: string): [boolean, Pipeline.Filter] {
         let filter = this.availableFilters.find((f: Function) => { if (f.name === filterName) { return true; } else { return false; } });
@@ -100,9 +102,11 @@ export class App extends React.Component<AppProps, AppState> {
         let filtered = this.state.input;
 
         if (this.state.filters.length > 0) {
-            filtered = Pipeline.AllMatch(this.state.input, this.state.filters);
+            let lastFilter = [new Pipeline.Filter(Utils.guid(), FilterLibray.Filters.compareFilter, { "key": "num", "value": 1 })];
+            let lastFilter1 = [new Pipeline.Filter(Utils.guid(), FilterLibray.Filters.compareFilter, { "key": "name", "value": "offa" })];
+            let lastFilter2 = [new Pipeline.Filter(Utils.guid(), FilterLibray.Filters.compareFilter, { "key": "name", "value": "azza" })];
 
-
+            filtered = Pipeline.AllMatch(Pipeline.Combine([[this.state.input, lastFilter2], [this.state.input, lastFilter1]]), lastFilter);
         }
 
         filtered = filtered.map((obj: any, index: number) => { return <tr key={obj + index}><td>{JSON.stringify(obj)}</td></tr> });

@@ -23,6 +23,9 @@ export module Pipeline {
     export function NoneMatch(input: any, filters: Array<IFilter>) : any {
         throw 'Not implemented';
     }
+    export function Combine(input: [[any, Array<IFilter>], [any, Array<IFilter>]]) : Array<any> {
+        return SomeMatch(input[0][0], input[0][1]).concat(SomeMatch(input[1][0], input[1][1]));
+    }
 
     export interface IFilter { func: Function, args: Array<any> }
     
